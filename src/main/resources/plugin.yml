@@ -1,0 +1,24 @@
+name: DynamicEco
+main: top.gregtao.dynamiceco.DynamicEco
+version: 0.0.1
+author: GregTao
+api-version: 1.16
+depend:
+  - Vault
+commands:
+  systemshop:
+    usage: /systemshop
+    description: Show all system shops
+    permission: systemshops.open
+  systemshopconfig:
+    usage: /systemshopconfig [arg1]
+    description: OPs' command for configs
+    permission: systemshops.config
+
+permissions:
+  systemshops.config:
+    description: Allows admins to reload configs
+    default: op
+  systemshops.open:
+    description: Allows players to open system shops
+    default: true
