@@ -1,17 +1,14 @@
 package top.gregtao.dynamiceco;
 
-import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
-import org.bukkit.permissions.Permission;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import top.gregtao.dynamiceco.commands.SystemShopCommand;
@@ -19,16 +16,16 @@ import top.gregtao.dynamiceco.commands.SystemShopConfigCommand;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Level;
 
 public class DynamicEco extends JavaPlugin {
-    public Map<Integer, SystemShop> shopMap = new HashMap<>();
+    public File shopConfigFile = new File("./plugins/DynamicEco/system_shops.yml");
+    public File configFolder = this.shopConfigFile.getParentFile();
+    public List<SystemShop> shopList = new ArrayList<>();
     public Economy economy = null;
-    private Permission permission = null;
-    private Chat chat = null;
 
     public void addCommand(String commandStr, CommandExecutor executor) {
         PluginCommand command = this.getCommand(commandStr);
@@ -44,21 +41,34 @@ public class DynamicEco extends JavaPlugin {
         this.getLogger().log(Level.INFO, str);
     }
 
+    public void error(String str) {
+        this.getLogger().log(Level.SEVERE, str);
+    }
+
+    public void warn(String str) {
+        this.getLogger().log(Level.WARNING, str);
+    }
+
     @Override
     public void onEnable() {
+        if (!this.configFolder.exists()) {
+            if (!this.configFolder.mkdir()) {
+                this.warn("Could not mkdir " + this.configFolder);
+            } else {
+                this.log("Created plugin file folder");
+            }
+        }
+
         this.addCommand("systemshop", new SystemShopCommand(this));
         this.addCommand("systemshopconfig", new SystemShopConfigCommand(this));
-        this.getServer().dispatchCommand(this.getServer().getConsoleSender(), "");
+
         this.addListener(new SystemShopGUI(this));
 
         this.readShops();
 
         if (!setupEconomy()) {
-            this.log("Vault dependency not found!");
-            return;
+            this.error("Vault dependency not found!");
         }
-        setupPermissions();
-        setupChat();
     }
 
     @Override
@@ -67,9 +77,18 @@ public class DynamicEco extends JavaPlugin {
     }
 
     public void addShop(Material item, int price) {
-        this.shopMap.put(
-                this.shopMap.size(),
-                new SystemShop(item, 0, price, item.name(), 0.3f, 10, price, this)
+        int id = this.shopList.size();
+        this.shopList.add(
+                new SystemShop(new ItemStack(item), 0, price, item.name(),
+                        0.3f, 10, 100, 1000, 0, 0, id, this)
+        );
+    }
+
+    public void addShop(ItemStack itemStack, String name, int minPrice, int maxPrice, float delta, int maxAmount) {
+        int id = this.shopList.size();
+        this.shopList.add(
+                new SystemShop(itemStack, 0, maxPrice, name,
+                        delta, minPrice, maxPrice, maxAmount, 0, 0, id, this)
         );
     }
 
@@ -84,16 +103,20 @@ public class DynamicEco extends JavaPlugin {
     }
 
     public void readShops() {
+        this.shopList.clear();
         FileConfiguration configuration = this.getConfig();
         try {
-            File file = new File("./system_shops.yml");
-            if (!file.exists()) {
-                if (!file.createNewFile()) return;
+            if (!this.shopConfigFile.exists()) {
+                if (!this.shopConfigFile.createNewFile()) {
+                    this.warn("Could not create file " + this.shopConfigFile);
+                    return;
+                }
+                this.log("Created default config file");
                 this.addDefaultShops();
                 this.saveShops();
                 return;
             }
-            configuration.load("./system_shops.yml");
+            configuration.load(this.shopConfigFile);
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
@@ -102,24 +125,31 @@ public class DynamicEco extends JavaPlugin {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             if (slots++ > 54) return;
             MemorySection section = (MemorySection) entry.getValue();
-            Material material = Material.matchMaterial(Objects.requireNonNull(section.getString("item")));
-            this.shopMap.put(
-                    this.shopMap.size(),
+            MemorySection item = (MemorySection) section.getValues(true).get("item");
+            if (item == null) {
+                this.error("Shop '" + entry.getKey() + "' is not available!");
+                continue;
+            }
+            this.shopList.add(
                     new SystemShop(
-                            material, section.getInt("amount"), (float) section.getDouble("price"), entry.getKey(),
-                            (float) section.getDouble("delta"),
-                            section.getInt("minprice"), section.getInt("maxprice"), this)
+                            ItemStack.deserialize(item.getValues(false)), section.getInt("amount"),
+                            (float) section.getDouble("price"), entry.getKey(), (float) section.getDouble("delta"),
+                            section.getInt("minprice"), section.getInt("maxprice"), section.getInt("maxamount"),
+                            section.getInt("soldamount"), section.getInt("getamount"), this.shopList.size(), this)
             );
         }
+        this.log("Successfully loaded " + this.shopList.size() + " shops!");
     }
 
     public void saveShops() {
+        this.log("Saving data!");
         FileConfiguration configuration = this.getConfig();
-        for (Map.Entry<Integer, SystemShop> entry : this.shopMap.entrySet()) {
-            configuration.set(entry.getValue().name, entry.getValue().serialize());
+        for (SystemShop shop : this.shopList) {
+            if (!shop.removed) configuration.set(shop.name, shop.serialize());
+            else configuration.set(shop.name, null);
         }
         try {
-            configuration.save("./system_shops.yml");
+            configuration.save(this.shopConfigFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,18 +165,6 @@ public class DynamicEco extends JavaPlugin {
         }
         this.economy = rsp.getProvider();
         return true;
-    }
-
-    private void setupChat() {
-        RegisteredServiceProvider<Chat> rsp = this.getServer().getServicesManager().getRegistration(Chat.class);
-        if (rsp == null) return;
-        this.chat = rsp.getProvider();
-    }
-
-    private void setupPermissions() {
-        RegisteredServiceProvider<Permission> rsp = this.getServer().getServicesManager().getRegistration(Permission.class);
-        if (rsp == null) return;
-        this.permission = rsp.getProvider();
     }
 
 }

@@ -9,33 +9,30 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Map;
-import java.util.Objects;
-
 public class SystemShopGUI implements Listener {
     public DynamicEco plugin;
     public Inventory gui = Bukkit.createInventory(null, 54, TitleColor.AQUA.getWith("SystemShop"));
 
     public SystemShopGUI(DynamicEco plugin) {
         this.plugin = plugin;
-        for (Map.Entry<Integer, SystemShop> entry : this.plugin.shopMap.entrySet()) {
-            this.gui.setItem(entry.getKey(), entry.getValue().getSlot());
+        for (SystemShop shop : this.plugin.shopList) {
+            if (!shop.removed) this.gui.setItem(shop.id, shop.getSlot());
         }
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
-        if (title.equals(TitleColor.AQUA.getWith("SystemShop")) &&
-                !Objects.requireNonNull(event.getClickedInventory()).getType().equals(InventoryType.PLAYER)) {
+        if (title.equals(TitleColor.AQUA.getWith("SystemShop")) && event.getClickedInventory() != null &&
+               !event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
             Player player = (Player) event.getWhoClicked();
             int slot = event.getSlot();
-            if (!this.plugin.shopMap.containsKey(slot)) {
+            if (this.plugin.shopList.size() <= slot) {
                 event.setCancelled(true);
                 return;
             }
             if (!this.plugin.economy.hasAccount(player)) this.plugin.economy.createPlayerAccount(player);
-            SystemShop shop = this.plugin.shopMap.get(slot);
+            SystemShop shop = this.plugin.shopList.get(slot);
             if (event.isLeftClick()) {
                 if (this.plugin.economy.getBalance(player) < shop.price) {
                     player.sendMessage("¹ºÂòÊ§°Ü£¬Óà¶î²»×ã");
@@ -51,7 +48,7 @@ public class SystemShopGUI implements Listener {
                             player.getInventory().setItem(p, shop.buy(1));
                             success = true;
                             break;
-                        } else if (itemStack.getType().equals(shop.item) && itemStack.getAmount() < 64) {
+                        } else if (itemStack.isSimilar(shop.item) && itemStack.getAmount() < itemStack.getType().getMaxStackSize()) {
                             itemStack.setAmount(itemStack.getAmount() + 1);
                             shop.buy(1);
                             this.plugin.economy.withdrawPlayer(player, shop.price);
@@ -67,9 +64,14 @@ public class SystemShopGUI implements Listener {
                     player.getOpenInventory().setItem(slot, shop.getSlot());
                 }
             } else if (event.isRightClick()) {
+                if (shop.amount >= shop.maxAmount) {
+                    player.sendMessage("¿â´æÒÑÂú£¬ÎÞ·¨³öÊÛ£¡");
+                    event.setCancelled(true);
+                    return;
+                }
                 boolean success = false;
                 for (ItemStack itemStack : player.getInventory()) {
-                    if (itemStack != null && itemStack.getType().equals(shop.item)) {
+                    if (itemStack != null && itemStack.isSimilar(shop.item)) {
                         itemStack.setAmount(itemStack.getAmount() - 1);
                         shop.sale();
                         this.plugin.economy.depositPlayer(player, shop.price);

@@ -1,6 +1,5 @@
 package top.gregtao.dynamiceco;
 
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -11,35 +10,40 @@ import java.util.Map;
 
 public class SystemShop {
 
-    public Material item;
+    public ItemStack item;
     public int amount;
     public float price;
     public String name;
     public float delta;
     public int minPrice;
     public int maxPrice;
+    public int maxAmount;
     public DynamicEco plugin;
+    public int id;
 
-    public int soldAmount = 0;
-    public int getAmount = 0;
+    public int soldAmount;
+    public int getAmount;
 
-    public SystemShop(Material material, int amount, float price, String name, float delta, int minPrice, int maxPrice, DynamicEco plugin) {
-        this.item = material;
+    public boolean removed = false;
+
+    public SystemShop(ItemStack item, int amount, float price, String name, float delta, int minPrice, int maxPrice,
+                      int maxAmount, int soldAmount, int getAmount, int id, DynamicEco plugin) {
+        this.item = item;
         this.amount = amount;
         this.price = price;
         this.name = name;
         this.delta = delta;
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
+        this.maxAmount = maxAmount;
+        this.soldAmount = soldAmount;
+        this.getAmount = getAmount;
+        this.id = id;
         this.plugin = plugin;
     }
 
-    public float getProportion() {
-        return this.getAmount == 0 ? 0 : (float) this.soldAmount / (float) this.getAmount;
-    }
-
     public float getPriceByProportion() {
-        return Math.max(this.maxPrice - this.amount * this.delta / 16, this.minPrice);
+        return (float) Math.round(Math.max(this.maxPrice - this.amount * this.delta / 16, this.minPrice) * 100) / 100;
     }
 
     public void setNewPrice() {
@@ -54,6 +58,7 @@ public class SystemShop {
             List<String> list = new ArrayList<>();
             list.add(TitleColor.ORANGE.getWith("Price: " + this.price));
             list.add(TitleColor.GREEN.getWith("Amount: " + this.amount));
+            list.add(TitleColor.GREY.getWith("ID: " + this.id));
             meta.setLore(list);
             itemStack.setItemMeta(meta);
         }
@@ -65,7 +70,9 @@ public class SystemShop {
         this.amount -= amount;
         this.getAmount += amount;
         this.setNewPrice();
-        return new ItemStack(this.item, amount);
+        ItemStack newStack = this.item.clone();
+        newStack.setAmount(amount);
+        return newStack;
     }
 
     public void sale() {
@@ -76,12 +83,15 @@ public class SystemShop {
 
     public Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
-        map.put("item", this.item.name());
+        map.put("item", this.item.serialize());
         map.put("amount", this.amount);
         map.put("price", this.price);
         map.put("delta", this.delta);
         map.put("minprice", this.minPrice);
         map.put("maxprice", this.maxPrice);
+        map.put("maxamount", this.maxAmount);
+        map.put("soldamount", this.soldAmount);
+        map.put("getamount", this.getAmount);
         return map;
     }
 
