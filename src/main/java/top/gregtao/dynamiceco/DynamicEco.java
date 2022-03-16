@@ -4,9 +4,6 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.MemorySection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -14,18 +11,47 @@ import org.bukkit.plugin.java.JavaPlugin;
 import top.gregtao.dynamiceco.commands.SystemShopCommand;
 import top.gregtao.dynamiceco.commands.SystemShopConfigCommand;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 public class DynamicEco extends JavaPlugin {
-    public File shopConfigFile = new File("./plugins/DynamicEco/system_shops.yml");
-    public File configFolder = this.shopConfigFile.getParentFile();
+
+    public Config config;
     public List<SystemShop> shopList = new ArrayList<>();
     public Economy economy = null;
+
+    public InputStream getFileInResource(String file) {
+        return this.getResource(file);
+    }
+
+    public void copyFromResource(String from, File to) {
+        try {
+            if (!to.exists() && to.createNewFile()) {
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(to), StandardCharsets.UTF_8));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(this.getFileInResource(from), StandardCharsets.UTF_8));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    writer.write(line + "\n");
+                }
+                writer.close();
+                reader.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getPages() {
+        return this.shopList.size() / 18;
+    }
+
+    public String getLanguage(String str) {
+        String string = this.config.language.get(str);
+        return string == null ? "" : string;
+    }
 
     public void addCommand(String commandStr, CommandExecutor executor) {
         PluginCommand command = this.getCommand(commandStr);
@@ -51,20 +77,12 @@ public class DynamicEco extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        if (!this.configFolder.exists()) {
-            if (!this.configFolder.mkdir()) {
-                this.warn("Could not mkdir " + this.configFolder);
-            } else {
-                this.log("Created plugin file folder");
-            }
-        }
+        this.config = new Config(this, "./plugins/DynamicEco");
 
         this.addCommand("systemshop", new SystemShopCommand(this));
         this.addCommand("systemshopconfig", new SystemShopConfigCommand(this));
 
-        this.addListener(new SystemShopGUI(this));
-
-        this.readShops();
+        this.addListener(new SystemShopGUI(this, -1));
 
         if (!setupEconomy()) {
             this.error("Vault dependency not found!");
@@ -73,7 +91,7 @@ public class DynamicEco extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        this.saveShops();
+        this.config.saveShops();
     }
 
     public void addShop(Material item, int price) {
@@ -100,59 +118,24 @@ public class DynamicEco extends JavaPlugin {
         this.addShop(Material.GOLD_INGOT, 100);
         this.addShop(Material.REDSTONE, 100);
         this.addShop(Material.NETHERITE_INGOT, 100);
-    }
+        this.addShop(Material.QUARTZ, 100);
 
-    public void readShops() {
-        this.shopList.clear();
-        FileConfiguration configuration = this.getConfig();
-        try {
-            if (!this.shopConfigFile.exists()) {
-                if (!this.shopConfigFile.createNewFile()) {
-                    this.warn("Could not create file " + this.shopConfigFile);
-                    return;
-                }
-                this.log("Created default config file");
-                this.addDefaultShops();
-                this.saveShops();
-                return;
-            }
-            configuration.load(this.shopConfigFile);
-        } catch (IOException | InvalidConfigurationException e) {
-            e.printStackTrace();
-        }
-        Map<String, Object> map = configuration.getValues(false);
-        int slots = 0;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            if (slots++ > 54) return;
-            MemorySection section = (MemorySection) entry.getValue();
-            MemorySection item = (MemorySection) section.getValues(true).get("item");
-            if (item == null) {
-                this.error("Shop '" + entry.getKey() + "' is not available!");
-                continue;
-            }
-            this.shopList.add(
-                    new SystemShop(
-                            ItemStack.deserialize(item.getValues(false)), section.getInt("amount"),
-                            (float) section.getDouble("price"), entry.getKey(), (float) section.getDouble("delta"),
-                            section.getInt("minprice"), section.getInt("maxprice"), section.getInt("maxamount"),
-                            section.getInt("soldamount"), section.getInt("getamount"), this.shopList.size(), this)
-            );
-        }
-        this.log("Successfully loaded " + this.shopList.size() + " shops!");
-    }
+        this.addShop(Material.DIAMOND_BLOCK, 900);
+        this.addShop(Material.IRON_BLOCK, 900);
+        this.addShop(Material.COAL_BLOCK, 900);
+        this.addShop(Material.LAPIS_BLOCK, 900);
+        this.addShop(Material.GOLD_BLOCK, 900);
+        this.addShop(Material.REDSTONE_BLOCK, 900);
+        this.addShop(Material.NETHERITE_BLOCK, 900);
+        this.addShop(Material.QUARTZ_BLOCK, 900);
 
-    public void saveShops() {
-        this.log("Saving data!");
-        FileConfiguration configuration = this.getConfig();
-        for (SystemShop shop : this.shopList) {
-            if (!shop.removed) configuration.set(shop.name, shop.serialize());
-            else configuration.set(shop.name, null);
-        }
-        try {
-            configuration.save(this.shopConfigFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.addShop(Material.OBSIDIAN, 200);
+        this.addShop(Material.CRYING_OBSIDIAN, 200);
+
+        this.addShop(Material.IRON_NUGGET, 50);
+        this.addShop(Material.GOLD_NUGGET, 50);
+
+        this.addShop(Material.NETHERITE_SCRAP, 50);
     }
 
     private boolean setupEconomy() {

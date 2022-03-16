@@ -1,17 +1,17 @@
 name: DynamicEco
 main: top.gregtao.dynamiceco.DynamicEco
-version: 0.0.1
+version: 0.0.2
 author: GregTao
 api-version: 1.16
 depend:
   - Vault
 commands:
   systemshop:
-    usage: /systemshop
+    usage: /systemshop [page]
     description: Show all system shops
     permission: systemshops.open
   systemshopconfig:
-    usage: /systemshopconfig [arg1]
+    usage: /systemshopconfig [args...]
     description: OPs' command for configs
     permission: systemshops.config
 

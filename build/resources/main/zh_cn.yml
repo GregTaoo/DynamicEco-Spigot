@@ -1,0 +1,14 @@
+gui-right_arrow: 下一页
+shop-buy_success: 购买成功！
+shop-buy_failure_inventory: 购买失败，你的背包已满！
+gui-amount: 库存
+shop-buy_failure_balance: 购买失败，余额不足！
+gui-border: 边框
+shop-sale_failure_no: 你没有足够的该物品出售！
+cmd-not_player: 你并不是玩家！
+shop-sale_success: 成功出售
+shop-buy_failure_removed: 此商店已被删除
+gui-price: 价格
+shop-sale_failure_full: 该商店库存已满，无法向其出售！
+gui-left_arrow: 上一页
+gui-page_not_available: 此页码不存在

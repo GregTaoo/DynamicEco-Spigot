@@ -1,0 +1,14 @@
+gui-right_arrow: RIGHT PAGE
+shop-buy_success: Successfully bought.
+shop-buy_failure_inventory: Failed to buy! Please clean your inventory!
+gui-amount: Amount
+shop-buy_failure_balance: Failed to buy! You don't have enough balance!
+gui-border: BORDER
+shop-sale_failure_no: You don't have enough items for sale!
+cmd-not_player: You are not a player!
+shop-sale_success: Successfully sold out.
+shop-buy_failure_removed: This shop has been removed.
+gui-price: Price
+shop-sale_failure_full: Failed to sale! This shop is full!
+gui-left_arrow: LEFT PAGE
+gui-page_not_available: This page is not available!

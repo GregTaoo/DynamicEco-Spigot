@@ -26,12 +26,12 @@ public class SystemShopConfigCommand implements CommandExecutor {
                     this.plugin.log("Set configs to default states!");
                     this.plugin.shopList.clear();
                     this.plugin.addDefaultShops();
-                    this.plugin.saveShops();
+                    this.plugin.config.saveShops();
                     return true;
                 } else if (args[0].equalsIgnoreCase("reloadShops")) {
                     sender.sendMessage(TitleColor.RED.getWith("Reloading configs"));
                     this.plugin.log("Reloading configs");
-                    this.plugin.readShops();
+                    this.plugin.config.readShops();
                     return true;
                 }
                 return false;
@@ -45,13 +45,13 @@ public class SystemShopConfigCommand implements CommandExecutor {
                             if (shop.id == id) {
                                 String title = shop.name;
                                 shop.removed = success = true;
-                                this.plugin.saveShops();
+                                this.plugin.config.saveShops();
                                 sender.sendMessage("Successfully removed system shop '" + title + "', whose ID is " + id);
                                 break;
                             }
                         }
                         if (!success) sender.sendMessage("Could not found a system shop by ID " + id);
-                        else this.plugin.readShops();
+                        else this.plugin.config.readShops();
                         return true;
                     }
                 }
@@ -66,6 +66,12 @@ public class SystemShopConfigCommand implements CommandExecutor {
                         float delta = MathHelper.parseFloat(args[3]);
                         int maxAmount = MathHelper.parseInt(args[4]);
                         String name = args[5];
+                        for (SystemShop shop : this.plugin.shopList) {
+                            if (name.equals(shop.name)) {
+                                player.sendMessage(TitleColor.YELLOW.getWith("This title had been used by another!"));
+                                return true;
+                            }
+                        }
                         ItemStack itemStack = player.getInventory().getItemInMainHand().clone();
                         if (itemStack.getType().isAir()) {
                             player.sendMessage("You must hold something in your main hand!");
