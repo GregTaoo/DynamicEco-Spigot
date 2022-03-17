@@ -27,7 +27,7 @@ public class DynamicEco extends JavaPlugin {
         return this.getResource(file);
     }
 
-    public void copyFromResource(String from, File to) {
+    public void copyFromResource(String from, File to) { //从Resource文件夹拷贝文件
         try {
             if (!to.exists() && to.createNewFile()) {
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(to), StandardCharsets.UTF_8));
@@ -48,7 +48,7 @@ public class DynamicEco extends JavaPlugin {
         return this.shopList.size() / 18;
     }
 
-    public String getLanguage(String str) {
+    public String getLanguage(String str) { //根据key获取语言包内容
         String string = this.config.language.get(str);
         return string == null ? "" : string;
     }
@@ -110,7 +110,7 @@ public class DynamicEco extends JavaPlugin {
         );
     }
 
-    public void addDefaultShops() {
+    public void addDefaultShops() { //加入默认商店
         this.addShop(Material.DIAMOND, 100);
         this.addShop(Material.IRON_INGOT, 100);
         this.addShop(Material.COAL, 100);

@@ -46,11 +46,11 @@ public class SystemShop {
         return (float) Math.round(Math.max(this.maxPrice - this.amount * this.delta / 16, this.minPrice) * 100) / 100;
     }
 
-    public void setNewPrice() {
+    public void setNewPrice() { //更新价格
         this.price = this.getPriceByProportion();
     }
 
-    public ItemStack getSlot() {
+    public ItemStack getSlot() { //获取GUI显示stack
         ItemStack itemStack = new ItemStack(this.item);
         ItemMeta meta = itemStack.getItemMeta();
         if (meta != null) {
@@ -81,7 +81,7 @@ public class SystemShop {
         this.setNewPrice();
     }
 
-    public Map<String, Object> serialize() {
+    public Map<String, Object> serialize() { //保存到Map内准备写入配置文件
         Map<String, Object> map = new HashMap<>();
         map.put("item", this.item.serialize());
         map.put("amount", this.amount);

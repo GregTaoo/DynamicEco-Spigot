@@ -17,20 +17,20 @@ public class Language {
     public File folder;
     public File file;
 
-    public Map<String, String> map = new HashMap<>();
+    public Map<String, String> map = new HashMap<>(); //语言文件哈希表
 
     public Language(DynamicEco plugin, String language, File configFolder) {
         this.plugin = plugin;
         this.language = language;
         this.folder = new File(configFolder.getPath() + "/languages");
-        if (!this.folder.exists() && this.folder.mkdir()) {
+        if (!this.folder.exists() && this.folder.mkdir()) { //拷贝默认语言文件
             File en = new File(this.folder.getPath() + "/en_us.yml");
             File zh = new File(this.folder.getPath() + "/zh_cn.yml");
             this.plugin.copyFromResource("en_us.yml", en);
             this.plugin.copyFromResource("zh_cn.yml", zh);
         }
         this.file = new File(this.folder.getPath() + "/" + this.language + ".yml");
-        if (!this.file.exists()) {
+        if (!this.file.exists()) { //准备读取语言文件
             this.language = "en_us";
             this.file = new File(this.folder.getPath() + "/" + this.language + ".yml");
             try {
@@ -52,7 +52,7 @@ public class Language {
         return this.map.get(key);
     }
 
-    public void readLanguageConfig() {
+    public void readLanguageConfig() { //读取语言文件
         FileConfiguration configuration = new YamlConfiguration();
         try {
             configuration.load(this.file);
@@ -72,7 +72,7 @@ public class Language {
     }
 
     public void generateDefault() {
-        FileConfiguration configuration = new YamlConfiguration();
+        FileConfiguration configuration = new YamlConfiguration(); //新建默认语言英语文件（废弃）
         try {
             configuration.load(this.file);
             this.add("gui-price", "Price");

@@ -1,6 +1,6 @@
 package top.gregtao.dynamiceco;
 
-public enum TitleColor {
+public enum TitleColor { //ÑÕÉ«Ã¶¾ÙÀà
     BLACK("¡ì0"),
     BLUE("¡ì1"),
     GREEN("¡ì2"),

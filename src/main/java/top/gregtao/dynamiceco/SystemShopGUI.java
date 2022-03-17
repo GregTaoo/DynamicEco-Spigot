@@ -21,7 +21,7 @@ public class SystemShopGUI implements Listener {
     public static ItemStack leftArrow;
     public static ItemStack rightArrow;
 
-    static {
+    static { //设置底部操作栏默认数据
         border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         border = setNameForStack(border, TitleColor.GREEN.getWith("BORDER"));
         leftArrow = new ItemStack(Material.ARROW);
@@ -44,7 +44,7 @@ public class SystemShopGUI implements Listener {
         this.page = page;
         this.title = TitleColor.AQUA.getWith(this.title + (this.page < 0 ? "" : this.page));
         this.gui = Bukkit.createInventory(null, 27, this.title);
-        if (page >= 0) {
+        if (page >= 0) { //暴力载入页面
             for (int i = page * 18; i < Math.min(this.plugin.shopList.size(), page * 18 + 18); ++i) {
                 SystemShop shop = this.plugin.shopList.get(i);
                 this.gui.setItem(this.getSlot(shop.id), shop.getSlot());
@@ -77,11 +77,11 @@ public class SystemShopGUI implements Listener {
                 player.closeInventory();
                 return;
             }
-            if (slot == 18) {
+            if (slot == 18) { //上一页
                 event.setCancelled(true);
                 player.openInventory(new SystemShopGUI(this.plugin, Math.max(0, page - 1)).gui);
                 return;
-            } else if (slot == 26) {
+            } else if (slot == 26) { //下一页
                 event.setCancelled(true);
                 player.openInventory(new SystemShopGUI(this.plugin, Math.min(this.plugin.getPages(), page + 1)).gui);
                 return;
@@ -95,7 +95,7 @@ public class SystemShopGUI implements Listener {
                 player.sendMessage(this.plugin.getLanguage("shop-buy_failure_removed"));
                 return;
             }
-            if (event.isLeftClick()) {
+            if (event.isLeftClick()) { //左键购买
                 if (this.plugin.economy.getBalance(player) < shop.price) {
                     player.sendMessage(this.plugin.getLanguage("shop-buy_failure_balance"));
                     event.setCancelled(true);
@@ -113,7 +113,7 @@ public class SystemShopGUI implements Listener {
                         } else if (itemStack.isSimilar(shop.item) && itemStack.getAmount() < itemStack.getType().getMaxStackSize()) {
                             itemStack.setAmount(itemStack.getAmount() + 1);
                             shop.buy(1);
-                            this.plugin.economy.withdrawPlayer(player, shop.price);
+                            this.plugin.economy.withdrawPlayer(player, shop.price); //扣钱
                             success = true;
                             break;
                         }
@@ -125,7 +125,7 @@ public class SystemShopGUI implements Listener {
                     this.gui.setItem(slot, shop.getSlot());
                     player.getOpenInventory().setItem(slot, shop.getSlot());
                 }
-            } else if (event.isRightClick()) {
+            } else if (event.isRightClick()) { //右键出售
                 if (shop.amount >= shop.maxAmount) {
                     player.sendMessage(this.plugin.getLanguage("shop-sale_failure_full"));
                     event.setCancelled(true);
@@ -136,7 +136,7 @@ public class SystemShopGUI implements Listener {
                     if (itemStack != null && itemStack.isSimilar(shop.item)) {
                         itemStack.setAmount(itemStack.getAmount() - 1);
                         shop.sale();
-                        this.plugin.economy.depositPlayer(player, shop.price);
+                        this.plugin.economy.depositPlayer(player, shop.price); //加钱
                         success = true;
                         break;
                     }
